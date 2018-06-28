@@ -16,6 +16,7 @@ S = "${WORKDIR}/git"
 
 EXTRA_OECONF_append = "${@bb.utils.contains('MACHINE_FEATURES', 'optee', '--enable-aes-ta', '', d)} "
 EXTRA_OECONF_append = " --enable-debug "
+EXTRA_OECONF_append = " --enable-sdp "
 
 # * --enable-playready : Enables support for Playready CDMI.
 #
