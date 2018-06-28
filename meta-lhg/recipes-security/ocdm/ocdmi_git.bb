@@ -15,6 +15,7 @@ SRCREV = "35e6436c899fed053ab4aaaf8ba9fc2a42bc5f7f"
 S = "${WORKDIR}/git"
 
 EXTRA_OECONF_append = "${@bb.utils.contains('MACHINE_FEATURES', 'optee', '--enable-aes-ta', '', d)} "
+EXTRA_OECONF_append = " --enable-debug "
 
 # * --enable-playready : Enables support for Playready CDMI.
 #
