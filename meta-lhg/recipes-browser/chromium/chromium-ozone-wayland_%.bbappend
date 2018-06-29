@@ -4,6 +4,7 @@ PACKAGECONFIG_append = " ${@bb.utils.contains('MACHINE_FEATURES', 'optee', 'use-
 
 OCDM_GIT_BRANCH="chromium-65.0.3315.0.r527534.igalia"
 OCDM_DESTSUFIX="ocdm"
+EXTERNAL_OCDM_DESTSUFIX="media/cdm/ppapi/external_open_cdm"
 
 SRC_URI += "${@bb.utils.contains('PACKAGECONFIG', 'use-ocdm', '\
     git://github.com/linaro-mmwg/open-content-decryption-module.git;protocol=https;branch=${OCDM_GIT_BRANCH};name=ocdm;destsuffix=${OCDM_DESTSUFIX}\
@@ -18,7 +19,7 @@ python add_ocdm_patches() {
 }
 
 copy_ocdm_files() {
-    cp -r ${WORKDIR}/ocdm ${S}/media/cdm/ppapi/external_open_cdm
+    cp -r ${WORKDIR}/ocdm ${S}/${EXTERNAL_OCDM_DESTSUFIX}
 }
 
 do_patch[prefuncs] += "${@bb.utils.contains('PACKAGECONFIG', 'use-ocdm', 'add_ocdm_patches', '', d)}"
