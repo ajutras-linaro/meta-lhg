@@ -43,3 +43,6 @@ do_install_append() {
             ${D}${libdir}/${BPN}/libopencdm.so
     fi
 }
+
+RDEPENDS_${PN}_append = " chromium-wayland-chromedriver "
+
