@@ -6,6 +6,12 @@ CORE_IMAGE_BASE_INSTALL += " \
     westeros \
     wpe \
     wpe-launcher \
+    optee-os \
+    optee-client \
+    optee-aes-decryptor \
+    portmap \
+    ocdmi \
+    opencdm \
 "
 
 CORE_IMAGE_BASE_INSTALL_remove = " \
