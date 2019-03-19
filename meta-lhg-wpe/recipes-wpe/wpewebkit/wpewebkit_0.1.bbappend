@@ -5,7 +5,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 # with 'pr_working' branch, no proper url available to validate clearkey
 BASE_URI = "git://github.com/psivasubramanian/WebKitForWayland;protocol=git;branch=pr_working"
 SRC_URI_append = " file://0001-incompatitable-types-fix.patch"
-SRCREV = "638d978d2bab09fb4fc31b8878461a4fa32b45fc"
+SRCREV = "${AUTOREV}"
 
 # to avoid maximum call stack size range error
 # validated in Hikey and iMX8M platforms
