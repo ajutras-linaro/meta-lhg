@@ -14,8 +14,10 @@ SRCREV = "02bef6abf867aab5a918c9544e678c6f1b492045"
 
 PV = "1.0.gitr${SRCPV}"
 S = "${WORKDIR}/git"
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-SRC_URI = "git://github.com/linaro-home/open-content-decryption-module;branch=chromium-53.0.2785.143"
+SRC_URI = "git://github.com/linaro-home/open-content-decryption-module;branch=chromium-53.0.2785.143 \
+           file://0001-ion_allocator_helper-Support-new-ION-API.patch"
 
 CXXFLAGS += "-Wno-narrowing"
 
