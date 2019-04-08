@@ -28,3 +28,5 @@ PACKAGECONFIG_remove = "playready"
 
 # enable opencdm
 PACKAGECONFIG_append = " opencdm"
+DEPENDS_append = " opencdm"
+RDEPENDS_${PN} += "opencdm"
