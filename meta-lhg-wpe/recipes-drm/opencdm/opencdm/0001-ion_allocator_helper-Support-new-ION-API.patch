@@ -1,7 +1,7 @@
-From 34bc2210c958595c3e73239c3f7119e62be53e57 Mon Sep 17 00:00:00 2001
+From ee5e92abf86ebf8b6c49b71c730081906451334c Mon Sep 17 00:00:00 2001
 From: Alexandre Jutras <alexandre.jutras@linaro.org>
 Date: Mon, 8 Apr 2019 14:48:47 -0400
-Subject: [PATCH] ion_allocator_helper: Support new ION API
+Subject: [PATCH 1/2] ion_allocator_helper: Support new ION API
 
 Starting with kernel 4.12, the ION API has been updated. Modify the ION
 allocator helper to support this new API.
