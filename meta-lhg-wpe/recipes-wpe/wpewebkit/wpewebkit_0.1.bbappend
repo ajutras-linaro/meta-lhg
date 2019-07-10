@@ -1,9 +1,7 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-# override WPEWebKit till ClearKey PR is merged
-# clearkey validated from 'patch-8' branch
-# with 'pr_working' branch, no proper url available to validate clearkey
-BASE_URI = "git://github.com/psivasubramanian/WebKitForWayland;protocol=git;branch=pr_working"
+# Use local copy
+BASE_URI = "git:///home/ajutras/dev/nxp/modules/WebKitForWayland;branch=end2end_sdp"
 SRC_URI_append = " file://0001-incompatitable-types-fix.patch"
 SRCREV = "${AUTOREV}"
 
