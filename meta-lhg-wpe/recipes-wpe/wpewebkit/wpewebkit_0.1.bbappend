@@ -28,3 +28,5 @@ PACKAGECONFIG_remove = "playready"
 PACKAGECONFIG_append = " opencdm"
 DEPENDS_append = " opencdm"
 RDEPENDS_${PN} += "opencdm"
+
+EXTRA_OECMAKE_append_mx8 = " -DENABLE_SECURE_DATA_PATH=ON"
