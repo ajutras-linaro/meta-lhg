@@ -1,9 +1,9 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
 # Use local copy
-BASE_URI = "git:///home/ajutras/dev/nxp/modules/WebKitForWayland;branch=end2end_sdp"
-SRC_URI_append = " file://0001-incompatitable-types-fix.patch"
-SRCREV = "${AUTOREV}"
+#BASE_URI = "git:///home/ajutras/dev/nxp/modules/WebKitForWayland;branch=end2end_sdp"
+#SRC_URI_append = " file://0001-incompatitable-types-fix.patch"
+#SRCREV = "${AUTOREV}"
 
 # to avoid maximum call stack size range error
 # validated in Hikey and iMX8M platforms
