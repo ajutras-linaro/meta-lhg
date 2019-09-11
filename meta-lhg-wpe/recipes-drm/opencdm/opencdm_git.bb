@@ -20,7 +20,9 @@ SRC_URI = "git://github.com/linaro-home/open-content-decryption-module;branch=ch
            file://0001-ion_allocator_helper-Support-new-ION-API.patch \
            file://0002-ion_allocator_helper-HACK-Copy-ion.h-locally.patch \
            file://0001-Allow-to-support-end-to-end-SDP.patch \
-           file://0001-Protect-against-concurent-access-to-the-media-engine.patch"
+           file://0001-Protect-against-concurent-access-to-the-media-engine.patch \
+           file://0001-Handle-non-secure-content-simultanuously-with-secure.patch \
+           file://0002-Hack-Do-not-send-file-descriptor-for-non-secure-cont.patch"
 
 CXXFLAGS += "-Wno-narrowing"
 

@@ -1,0 +1,149 @@
+From 84940bed84e3185c940d886729cd6e20c815536d Mon Sep 17 00:00:00 2001
+From: Alexandre Jutras <alexandre.jutras@nxp.com>
+Date: Wed, 17 Jul 2019 15:06:48 -0400
+Subject: [PATCH 1/2] Handle non-secure content simultanuously with secure
+ content
+
+Signed-off-by: Alexandre Jutras <alexandre.jutras@nxp.com>
+---
+ src/browser/wpe/opencdm/open_cdm.cpp               | 21 ++++++++++++++--
+ .../mediaengine/rpc/rpc_cdm_mediaengine_handler.cc | 28 ++++++++++++++++++----
+ src/common/open_cdm_common.h                       |  6 +++++
+ 3 files changed, 48 insertions(+), 7 deletions(-)
+
+diff --git a/src/browser/wpe/opencdm/open_cdm.cpp b/src/browser/wpe/opencdm/open_cdm.cpp
+index 86d8441..4e2ef7d 100644
+--- a/src/browser/wpe/opencdm/open_cdm.cpp
++++ b/src/browser/wpe/opencdm/open_cdm.cpp
+@@ -257,6 +257,8 @@ int OpenCdm::Decrypt(unsigned char* encryptedData, uint32_t encryptedDataLength,
+   uint32_t out_size = 0;
+   std::unique_lock<std::mutex> lck(m_decrypt_mtx);
+ 
++  OutputInfo output_info;
++
+   CDM_DLOG() << "OpenCdm::Decrypt session_id : " << m_session_id.session_id << endl;
+   CDM_DLOG() << "OpenCdm::Decrypt session_id_len : " << m_session_id.session_id_len << endl;
+   CDM_DLOG() << "OpenCdm::Decrypt encryptedDataLength : " << encryptedDataLength << endl;
+@@ -275,8 +277,23 @@ int OpenCdm::Decrypt(unsigned char* encryptedData, uint32_t encryptedDataLength,
+   CDM_DLOG() << "Returned back to OpenCdm::Decrypt";
+ 
+ #if OCDM_SDP_END2END
+-  out = (uint8_t *)&secureFd;
+-  out_size = secureSize;
++  if(secureFd < 0) {
++    // Non-secure
++    output_info.secure = false;
++    output_info.size = encryptedDataLength;
++    output_info.secureFd = -1;
++    output_info.pSharedMemory = encryptedData; /* in-place decryption */
++
++  } else {
++    // Secure
++    output_info.secure = true;
++    output_info.size = secureSize;
++    output_info.secureFd = secureFd; /* decryption in secure ion buffer */
++    output_info.pSharedMemory = NULL;
++  }
++  
++  out = (uint8_t *)&output_info;
++  out_size = sizeof(output_info);
+ #else
+   out = encryptedData;
+   out_size = encryptedDataLength;
+diff --git a/src/com/mediaengine/rpc/rpc_cdm_mediaengine_handler.cc b/src/com/mediaengine/rpc/rpc_cdm_mediaengine_handler.cc
+index e3136aa..9955f74 100644
+--- a/src/com/mediaengine/rpc/rpc_cdm_mediaengine_handler.cc
++++ b/src/com/mediaengine/rpc/rpc_cdm_mediaengine_handler.cc
+@@ -152,7 +152,7 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
+   uint32_t cbData,
+   uint32_t *pdwSubSampleMapping,
+   uint32_t cdwSubSampleMapping,
+-  uint8_t *out, /* For non-SDP and SDP prototype, out is a pointer to a buffer
++  uint8_t *out, /* TODO - Update comment: For non-SDP and SDP prototype, out is a pointer to a buffer
+                    where to decrypt the data. For SDP, out is a pointer to the
+                    secure ION file descriptor. */
+                 // TODO: Improve how the file descriptor is provided.
+@@ -170,6 +170,7 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
+   int status = 0;
+   uint32_t secure_size = 0;
+   int secure_fd = -1;
++  OutputInfo *pOutputInfo = NULL;
+ #if OCDM_SDP_PROTOTYPE
+   IonAllocator ionAlloc;
+ #endif
+@@ -178,12 +179,22 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
+   // TODO(sph): real decryptresponse values need to
+   // be written to sharedmem as well
+ 
+-  if(out_size < cbData) {
++#if OCDM_SDP_END2END
++  /* AJ-TODO Check structure size and output data size. */
++   if(out_size != sizeof(OutputInfo)) {
++    CDM_DLOG() << "Invalid size for output information structure (received: "<< out_size << ", expected: " << sizeof(OutputInfo) << ").";
++    response.platform_response = PLATFORM_CALL_FAIL;
++    return response;
++  }   
++  pOutputInfo = (OutputInfo *)out;
++#else
++   if(out_size < cbData) {
+     CDM_DLOG() << "Output buffer is too small (cbData: " << cbData << ", out_size: " << out_size << ").";
+     response.platform_response = PLATFORM_CALL_FAIL;
+     out_size = 0;
+     return response;
+-  }
++  } 
++#endif
+ 
+   LockSemaphore(idXchngSem, SEM_XCHNG_PUSH);
+   CDM_DLOG() << "LOCKed push lock";
+@@ -217,8 +228,10 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
+   }
+ 
+ #if OCDM_SDP_END2END
+-  secure_size = out_size;
+-  secure_fd = *(int32_t *)out;
++  if(pOutputInfo->secure) {
++    secure_size = pOutputInfo->size;
++    secure_fd = pOutputInfo->secureFd;
++  }
+ #elif OCDM_SDP_PROTOTYPE
+   status = ionAlloc.Allocate(cbData, ION_SECURE_HEAP_ID_DECODER);
+   if(status < 0) {
+@@ -259,6 +272,10 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
+     response.platform_response = PLATFORM_CALL_FAIL;
+     goto handle_error;
+   }
++#else /* OCDM_SDP_END2END */
++  if(!pOutputInfo->secure) {
++    memcpy(pOutputInfo->pSharedMemory, pSampleShMem, cbData);
++  }
+ #endif
+ 
+ #if OCDM_SDP_ANY
+@@ -292,6 +309,7 @@ handle_error:
+                << ": " << err;
+   }
+ 
++// AJ-TODO Adjust!
+   out_size = (response.platform_response == PLATFORM_CALL_SUCCESS) ? cbData : 0;
+ 
+   return response;
+diff --git a/src/common/open_cdm_common.h b/src/common/open_cdm_common.h
+index 03bb329..ff15a6b 100644
+--- a/src/common/open_cdm_common.h
++++ b/src/common/open_cdm_common.h
+@@ -51,5 +51,11 @@ const char kOpenCdmVersion[] = "1.0.0.0";
+ #define OCDM_SDP_ANY       (OCDM_SDP_PROTOTYPE || OCDM_SDP_END2END)
+ #define OCDM_SDP_DISABLED  (!OCDM_SDP_ANY)
+ 
++typedef struct _OutputInfo {
++  bool secure;
++  uint32_t size;
++  int secureFd; /* For secure */
++  uint8_t *pSharedMemory; /* For non-secure */
++} OutputInfo;
+ 
+ #endif  // MEDIA_CDM_PPAPI_EXTERNAL_OPEN_CDM_COMMON_OPEN_CDM_COMMON_H_
+-- 
+2.7.4
+

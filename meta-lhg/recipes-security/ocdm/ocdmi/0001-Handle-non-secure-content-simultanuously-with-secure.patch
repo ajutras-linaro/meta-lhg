@@ -1,0 +1,78 @@
+From a38b4e4e35570433b1a4e63ab54c76f94151f4eb Mon Sep 17 00:00:00 2001
+From: Alexandre Jutras <alexandre.jutras@nxp.com>
+Date: Wed, 17 Jul 2019 15:08:15 -0400
+Subject: [PATCH] Handle non-secure content simultanuously with secure content
+
+Signed-off-by: Alexandre Jutras <alexandre.jutras@nxp.com>
+---
+ cdmi/service.cpp              | 29 ++++++++++++++++++-----------
+ cdmi/socket_server_helper.cpp |  4 ++--
+ 2 files changed, 20 insertions(+), 13 deletions(-)
+
+diff --git a/cdmi/service.cpp b/cdmi/service.cpp
+index bf86c75..1806522 100644
+--- a/cdmi/service.cpp
++++ b/cdmi/service.cpp
+@@ -361,6 +361,10 @@ void decryptShmem(unsigned int idxMES, int idXchngSem, int idXchngShMem, int idS
+         goto handle_error;
+       }
+ #endif
++      CDMI_DLOG() << "decryptShmem: mesShmem->sampleSize: " << mesShmem->sampleSize 
++                  << "mem_sample: " << (unsigned long)mem_sample
++                  << "secureMemSize: " << secureMemSize
++                  << "secureFd: " << secureFd;
+ 
+       cr = pMediaEngineSession->Decrypt(
+           subsample_count,          //number of subsamples
+@@ -376,17 +380,20 @@ void decryptShmem(unsigned int idxMES, int idXchngSem, int idXchngShMem, int idS
+       if(cr!=CDMi_SUCCESS)
+         CDMI_ELOG() << "Failed to decrypt sample. Error:" << cr;
+ 
+-#ifndef CFG_SECURE_DATA_PATH
+-      // FIXME: opencdm uses a single buffer for passing the
+-      //  encrypted and decrypted buffer. Due to this we need an
+-      //  additional memcpy
+-      if(clear_content_size != mesShmem->sampleSize)
+-         CDMI_WLOG() << "Warning: returned clear sample size " << clear_content_size <<
+-          "differs from encrypted " <<
+-          "buffer size"  << mesShmem->sampleSize;
+-
+-      memcpy(mem_sample, clear_content, MIN(mesShmem->sampleSize, clear_content_size) );
+-#endif
++//#ifndef CFG_SECURE_DATA_PATH
++      /* Non-secure case */
++      if(secureFd < 0) {
++        // FIXME: opencdm uses a single buffer for passing the
++        //  encrypted and decrypted buffer. Due to this we need an
++        //  additional memcpy
++        if(clear_content_size != mesShmem->sampleSize)
++           CDMI_WLOG() << "Warning: returned clear sample size " << clear_content_size <<
++            "differs from encrypted " <<
++            "buffer size"  << mesShmem->sampleSize;
++
++        memcpy(mem_sample, clear_content, MIN(mesShmem->sampleSize, clear_content_size) );
++      }
++//#endif
+ 
+ handle_error:
+ #ifdef CFG_SECURE_DATA_PATH
+diff --git a/cdmi/socket_server_helper.cpp b/cdmi/socket_server_helper.cpp
+index 93e9dbf..91a56fb 100644
+--- a/cdmi/socket_server_helper.cpp
++++ b/cdmi/socket_server_helper.cpp
+@@ -210,10 +210,10 @@ int SocketServer::ReceiveFileDescriptor(int &f_FileDescriptor, uint32_t &f_Size)
+   }
+ 
+   f_FileDescriptor = *(int *)CMSG_DATA(cmsg);
+-  if(f_FileDescriptor < 0) {
++  /*if(f_FileDescriptor < 0) {
+     CDMI_ELOG() << "Invalid FD received";
+     status = -1;
+-  }
++  }*/
+ 
+   CDMI_DLOG() << "SocketServer::ReceiveFileDescriptor(): File descriptor is " << f_FileDescriptor;
+   CDMI_DLOG() << "SocketServer::ReceiveFileDescriptor(): File descriptor references " << f_Size << " bytes";
+-- 
+2.7.4
+

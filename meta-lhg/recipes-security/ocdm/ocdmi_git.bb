@@ -10,7 +10,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=ea83f8bc099c40bde8c4f2441a6eb40b"
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI = "git://github.com/linaro-mmwg/open-content-decryption-module-cdmi.git;protocol=https \
-           file://0001-Support-sub-sample-mapping-in-decryptShmem.patch"
+           file://0001-Support-sub-sample-mapping-in-decryptShmem.patch \
+           file://0001-Handle-non-secure-content-simultanuously-with-secure.patch"
 SRCREV = "35e6436c899fed053ab4aaaf8ba9fc2a42bc5f7f"
 
 S = "${WORKDIR}/git"
