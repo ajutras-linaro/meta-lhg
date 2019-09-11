@@ -22,11 +22,11 @@ RDEPS_EXTRA_remove = " \
                      "
 
 # remove playready
-PACKAGECONFIG_remove = "playready"
+#PACKAGECONFIG_remove = "playready"
 
 # enable opencdm
-PACKAGECONFIG_append = " opencdm"
-DEPENDS_append = " opencdm"
-RDEPENDS_${PN} += "opencdm"
+#PACKAGECONFIG_append = " opencdm"
+#DEPENDS_append = " opencdm"
+#RDEPENDS_${PN} += "opencdm"
 
 EXTRA_OECMAKE_append_mx8 = " -DENABLE_SECURE_DATA_PATH=ON"
